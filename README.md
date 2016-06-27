@@ -1,2 +1,4 @@
 # balana-extended
-An extended version of Balana (provided by WSO2) which implements a XACML 3.0 conflict analyzer, based on set theory.
+This project represents an extended version of [Balana](https://github.com/wso2/balana), originally provided by [WSO2](http://wso2.com/), which implements a XACML 3.0 conflict analyzer to help administrators in managing XACML policies. The tool also offers a prototype GUI.
+
+This project has been developed by Guido Marilli as a MSc thesis in Computer Engineering at Politecnico di Milano.
