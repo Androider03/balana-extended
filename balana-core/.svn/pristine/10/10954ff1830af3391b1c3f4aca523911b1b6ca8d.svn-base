@@ -1,0 +1,86 @@
+/**
+ * 
+ */
+package conflictanalyzer.statistics;
+
+import java.util.ArrayList;
+
+import org.wso2.balana.AbstractPolicy;
+
+/**
+ * @author Guido Marilli
+ * Contains a collection of policies which have in common the same amount of conflicts.
+ */
+public class PoliciesWithSameNumberOfConflicts {
+	
+	/**
+	 * The amount of conflicts in which the policies are involved.
+	 */
+	private int numberOfConflicts;
+	
+	/**
+	 * A group of policies that are involved in the same amount of conflicts.
+	 */
+	private ArrayList<AbstractPolicy> policies;
+
+	/**
+	 * @param numberOfConflicts
+	 * @param policies
+	 */
+	public PoliciesWithSameNumberOfConflicts(int numberOfConflicts, ArrayList<AbstractPolicy> policies) {
+		this.numberOfConflicts = numberOfConflicts;
+		this.policies = policies;
+	}
+	
+	/**
+	 * Creates an empty policies group with the specified number of conflicts that has to be 
+	 * common to them.
+	 * @param numberOfConflicts the specified number of conflicts
+	 */
+	public PoliciesWithSameNumberOfConflicts(int numberOfConflicts) {
+		this.numberOfConflicts = numberOfConflicts;
+		policies = new ArrayList<AbstractPolicy>();
+	}
+
+	/**
+	 * @return the numberOfConflicts
+	 */
+	public int getNumberOfConflicts() {
+		return numberOfConflicts;
+	}
+
+	/**
+	 * @return the policies
+	 */
+	public ArrayList<AbstractPolicy> getPolicies() {
+		return policies;
+	}
+	
+	/**
+	 * @param i the index
+	 * @return the i-th policy
+	 */
+	public AbstractPolicy getPolicy(int i) {
+		return policies.get(i);
+	}
+	
+	/**
+	 * Adds a policy to the collection.
+	 * @param policy the policy to add
+	 */
+	public void add(AbstractPolicy policy) {
+		policies.add(policy);
+	}
+	
+	/**
+	 * @return a string representation of the policies in the group
+	 */
+	public String getPoliciesIDs() {
+		String res = "";
+		for(int i = 0; i < policies.size() - 1; i++)
+			res += policies.get(i).getId() + ", ";
+		res += policies.get(policies.size()-1).getId();
+		return res;
+	}
+
+}

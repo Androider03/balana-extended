@@ -1,0 +1,172 @@
+/**
+ * 
+ */
+package conflictanalyzer.ui;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GraphicsConfiguration;
+import java.awt.HeadlessException;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
+/**
+ * @author Guido Marilli
+ * GUI for conflict analysis.
+ */
+public class ConflictAnalyzerGUI extends JFrame {
+	private JTextField pathTextField;
+	private File policiesDirectory;
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6523267782524837903L;
+
+	/**
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI() throws HeadlessException {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(GraphicsConfiguration gc) {
+		super(gc);
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param title
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI(String title, int width, int height) throws HeadlessException {
+		super(title);
+		setLayout(new BorderLayout());
+		setSize(width, height);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JPanel panel1 = new JPanel();
+		panel1.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JPanel panel2 = new JPanel();
+		
+		// PATH chooser
+		/*JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setToolTipText("Select the folder in which the policies"
+				+ " are stored");
+		fileChooser.setSize(150, 30);*/
+		
+		// PATH button
+		JButton selectPolicySourceButton = new JButton("Policies path");
+		selectPolicySourceButton.setMnemonic('P');
+		selectPolicySourceButton.setToolTipText("Select the folder in which the policies"
+				+ " are stored");
+		selectPolicySourceButton.setSize(150, 30);
+		selectPolicySourceButton.addActionListener(new OpenFileChooser());
+		
+		// PATH text field
+		pathTextField = new JTextField("C:\\...<path to policies directory>");
+		pathTextField.setColumns(30);
+		pathTextField.setEditable(false);
+		
+		// RUN button
+		JButton runButton = new JButton("Run");
+		runButton.setMnemonic('R');
+		runButton.setToolTipText("Run a new conflict analysis");
+		runButton.setSize(150, 30);
+		
+		// SAVE button
+		JButton saveButton = new JButton("Save");
+		saveButton.setMnemonic('S');
+		saveButton.setToolTipText("Save the results");
+		saveButton.setSize(150, 30);
+		
+		// TEXT AREA to show analysis results
+		JTextArea conflictsTextArea = new JTextArea(32, 70);
+		JTextArea statisticsTextArea = new JTextArea(32, 70);
+		
+		// SCROLL PANES for conflicts and statistics
+		JScrollPane conflictsScrollPane = new JScrollPane(conflictsTextArea);
+		JScrollPane statisticsScrollPane = new JScrollPane(statisticsTextArea);
+		
+		String[] tabLabels = {"Conflicts", "Statistics"};
+		JTabbedPane tabs = new JTabbedPane();
+		tabs.addTab(tabLabels[0], conflictsScrollPane);
+		tabs.addTab(tabLabels[1], statisticsScrollPane);
+		add(tabs);
+		
+		panel1.add(selectPolicySourceButton);
+		panel1.add(pathTextField);
+		panel1.add(runButton);
+		panel1.add(saveButton);
+		
+		panel2.add(tabs);
+		
+		// Add the panel to the frame
+		add(panel1, BorderLayout.NORTH);
+		add(panel2, BorderLayout.CENTER);
+	}
+
+	/**
+	 * @param title
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(String title, GraphicsConfiguration gc) {
+		super(title, gc);
+		// TODO Auto-generated constructor stub
+	}
+	
+	public static void main(String[] args) {
+		int width = 820;
+		int height = 630;
+		ConflictAnalyzerGUI gui = new ConflictAnalyzerGUI("Conflict Analyzer", width, height);
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int x = (screenSize.width - width)/2;
+		int y = (screenSize.height - height)/2;
+		gui.setLocation(x, y);		// Set the GUI at exact center of the screen
+		gui.setVisible(true);
+	}
+	
+	private class OpenFileChooser implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				//pathTextField.setText("");
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				//fileChooser.setFileFilter(new TxtFileFilter());
+				int n = fileChooser.showOpenDialog(ConflictAnalyzerGUI.this);
+				if (n == JFileChooser.APPROVE_OPTION) {
+					/*File f = fileChooser.getSelectedFile();
+					BufferedReader read = new BufferedReader(new FileReader(f));
+					String line = read.readLine();
+					while(line != null) {
+						pathTextField.setText(line);
+						line = read.readLine();
+					}
+					read.close();*/
+					//policiesDirectory = fileChooser.getCurrentDirectory();
+					String path = fileChooser.getSelectedFile().getPath();
+					policiesDirectory = new File(path);
+					pathTextField.setText(path);
+				}
+			} catch (Exception ex) {}
+		}
+	}
+
+}

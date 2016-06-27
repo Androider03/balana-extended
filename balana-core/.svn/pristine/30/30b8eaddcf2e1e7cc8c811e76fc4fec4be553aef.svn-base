@@ -1,0 +1,70 @@
+/**
+ * 
+ */
+package utilities;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class PoliciesExtractor {
+	
+	public static void main(String[] args) throws SAXException, IOException, 
+			ParserConfigurationException, XPathExpressionException, TransformerException {
+		//String xml = "<A><B><id>0</id></B><B><id>1</id></B></A>";
+	    String xml = readFile("C:\\Users\\Guido\\Desktop\\sample.txt");
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+	    Document doc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+
+	    XPath xPath = XPathFactory.newInstance().newXPath();
+	    NodeList result = (NodeList) xPath.evaluate("//B", doc, XPathConstants.NODESET);
+	    
+	    for(int i = 0; i < result.getLength(); i++)
+	    	System.out.println(nodeToString(result.item(i)));
+	}
+
+	private static String nodeToString(Node node) throws TransformerException {
+		StringWriter buf = new StringWriter();
+		Transformer xform = TransformerFactory.newInstance().newTransformer();
+		xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		xform.transform(new DOMSource(node), new StreamResult(buf));
+		return(buf.toString());
+	}
+	
+	private static String readFile(String path) throws IOException{
+		StringBuilder sb = new StringBuilder();
+		String sCurrentLine = "";
+		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+			while ((sCurrentLine = br.readLine()) != null) {
+				sb.append(sCurrentLine);
+			}
+		}
+		return sb.toString();
+	}
+
+}

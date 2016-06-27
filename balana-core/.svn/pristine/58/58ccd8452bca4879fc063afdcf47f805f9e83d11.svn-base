@@ -1,0 +1,180 @@
+/**
+ * 
+ */
+package conflictanalyzer.support;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GradientPaint;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.category.SlidingCategoryDataset;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class SlidingChart {
+	/**
+	 * The panel containing the sliding chart itself.
+	 */
+	private JPanel chart;
+	
+	/**
+	 * Default constructor. Creates a chart with random data.
+	 */
+	public SlidingChart() {
+		chart = createDemoPanel();
+	}
+	
+	/**
+	 * Creates a chart with the specified data.
+	 * @param dataset the data to be represented in the chart.
+	 */
+	public SlidingChart(DefaultCategoryDataset data) {
+		chart = createDemoPanel(data);
+	}
+	
+	/**
+	 * @return the chart
+	 */
+	public JPanel getChart() {
+		return chart;
+	}
+
+	public static JPanel createDemoPanel() {
+        return new MyDemoPanel();
+    }
+	
+	public static JPanel createDemoPanel(DefaultCategoryDataset data) {
+        return new MyDemoPanel(data);
+    }
+	
+	static class MyDemoPanel extends DemoPanel implements ChangeListener {
+
+        private static final long serialVersionUID = 1L;
+        JScrollBar scroller;
+        SlidingCategoryDataset dataset;
+
+        private static CategoryDataset createDataset() {
+            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            for (int i = 0; i < 50; i++)
+                dataset.addValue(Math.random() * 100D, "S1", "Series " + i);
+            return dataset;
+        }
+        
+        private static JFreeChart createChart(CategoryDataset dataset) {
+        	JFreeChart chart = ChartFactory.createBarChart(
+                    null,  						 // chart title
+                    "Group",              // domain axis label
+                    "Conflicts",              	 // range axis label
+                    dataset,                     // data
+                    PlotOrientation.HORIZONTAL,  // orientation
+                    false,                       // include legend
+                    true,
+                    false
+                );
+        	/*chart.addSubtitle(new TextTitle(
+                    "Policies grouped by the number of conflicts in which they are involved", 
+                    new Font("Dialog", Font.ITALIC, 10)));*/
+        	
+            CategoryPlot plot = (CategoryPlot) chart.getPlot();
+            CategoryAxis domainAxis = plot.getDomainAxis();
+            domainAxis.setMaximumCategoryLabelWidthRatio(0.8F);
+            domainAxis.setLowerMargin(0.02D);
+            domainAxis.setUpperMargin(0.02D);
+            NumberAxis valueAxis = (NumberAxis) plot.getRangeAxis();
+            valueAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+            //valueAxis.setRange(0.0D, 100D);//hxzon:when restoreAutoBounds,invalidation
+            BarRenderer renderer = (BarRenderer) plot.getRenderer();
+            renderer.setDrawBarOutline(false);
+            GradientPaint gradientpaint = new GradientPaint(0.0F, 0.0F, Color.BLUE, 0.0F, 0.0F, 
+            		new Color(0, 0, 64));
+            renderer.setSeriesPaint(0, gradientpaint);
+            renderer.setBaseItemLabelsVisible(true);
+            renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
+            return chart;
+        }
+
+        public void stateChanged(ChangeEvent changeevent) {
+            //SlidingCategoryDataset
+            //A {@link CategoryDataset} implementation that presents a subset of the
+            // categories in an underlying dataset.  The index of the first "visible"
+            // category can be modified, which provides a means of "sliding" through
+            // the categories in the underlying dataset.
+            dataset.setFirstCategoryIndex(scroller.getValue());
+        }
+
+        public MyDemoPanel() {
+            super(new BorderLayout());
+            CategoryDataset data = createDataset();
+            dataset = new SlidingCategoryDataset(data, 0, 20);
+            JFreeChart jfreechart = createChart(dataset);
+            addChart(jfreechart);
+            ChartPanel chartpanel = new ChartPanel(jfreechart);
+            //chartpanel.setPreferredSize(new Dimension(400, 400));
+            //System.out.println(dataset);
+            scroller = new JScrollBar(1, 0, 20, 0, data.getColumnCount());
+            add(chartpanel);
+            scroller.getModel().addChangeListener(this);
+            JPanel jpanel = new JPanel(new BorderLayout());
+            jpanel.add(scroller);
+            jpanel.setBorder(BorderFactory.createEmptyBorder(66, 2, 2, 2));
+            jpanel.setBackground(Color.white);
+            add(jpanel, "East");
+        }
+        
+        public MyDemoPanel(DefaultCategoryDataset data) {
+            super(new BorderLayout());
+            dataset = new SlidingCategoryDataset(data, 0, 20);
+            JFreeChart jfreechart = createChart(dataset);
+            addChart(jfreechart);
+            ChartPanel chartpanel = new ChartPanel(jfreechart);
+            //chartpanel.setPreferredSize(new Dimension(400, 400));
+            int columns = data.getColumnCount();
+            scroller = new JScrollBar(1, 0, Math.min(columns, 20), 0, columns);
+            add(chartpanel);
+            scroller.getModel().addChangeListener(this);
+            JPanel jpanel = new JPanel(new BorderLayout());
+            jpanel.add(scroller);
+            jpanel.setBorder(BorderFactory.createEmptyBorder(66, 2, 2, 2));
+            jpanel.setBackground(Color.white);
+            add(jpanel, "East");
+        }
+
+		/*public MyDemoPanel(DefaultCategoryDataset data) {
+			super(new BorderLayout());
+            //dataset = new SlidingCategoryDataset(data, 0, 200);
+            JFreeChart jfreechart = createChart(dataset);
+            addChart(jfreechart);
+            ChartPanel chartpanel = new ChartPanel(jfreechart);
+            //chartpanel.setPreferredSize(new Dimension(400, 400));
+            int maximum = data.getRowCount();
+            scroller = new JScrollBar(1, 0, 20, 0, maximum);
+            add(chartpanel);
+            scroller.getModel().addChangeListener(this);
+            JPanel jpanel = new JPanel(new BorderLayout());
+            jpanel.add(scroller);
+            jpanel.setBorder(BorderFactory.createEmptyBorder(66, 2, 2, 2));
+            jpanel.setBackground(Color.white);
+            add(jpanel, "East");
+		}*/
+    }
+
+}

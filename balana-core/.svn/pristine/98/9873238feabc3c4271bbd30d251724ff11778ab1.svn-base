@@ -1,0 +1,101 @@
+/**
+ * 
+ */
+package conflictanalyzer.logic;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.wso2.balana.AbstractPolicy;
+
+import utilities.PriorityRandomizer;
+
+/**
+ * @author Guido Marilli
+ * An object of this type is used to find any possible conflicts among policies that are
+ * store in files in the specified path and that start with the specified prefix.
+ */
+public class PolicyConflictAnalyzer {
+	
+	/**
+	 * The base directory in which the policies files are stored.
+	 */
+	private String basePath;
+	
+	/**
+	 * The prefix common to all the files in the base directory that contain the policies.
+	 */
+	private String policiesBaseName;
+	
+	/**
+	 * The couples of conflicting rules found.
+	 */
+	private List<ConflictingRulesPair> conflicts;
+	
+	/**
+	 * @param basePath the base path in which the policies are stored
+	 * @param policiesBaseName the prefix with every policy file starts
+	 */
+	public PolicyConflictAnalyzer(String basePath, String policiesBaseName) {
+		this.basePath = basePath;
+		this.policiesBaseName = policiesBaseName;
+		conflicts = new ArrayList<ConflictingRulesPair>();
+		searchConflicts();
+	}
+	
+	/**
+	 * @return the basePath
+	 */
+	public String getBasePath() {
+		return basePath;
+	}
+
+	/**
+	 * @param basePath the basePath to set
+	 */
+	public void setBasePath(String basePath) {
+		this.basePath = basePath;
+	}
+
+	/**
+	 * @return the policiesBaseName
+	 */
+	public String getPoliciesBaseName() {
+		return policiesBaseName;
+	}
+
+	/**
+	 * @param policiesBaseName the policiesBaseName to set
+	 */
+	public void setPoliciesBaseName(String policiesBaseName) {
+		this.policiesBaseName = policiesBaseName;
+	}
+	
+	/**
+	 * @return the conflicts
+	 */
+	public List<ConflictingRulesPair> getConflicts() {
+		return conflicts;
+	}
+
+	/**
+	 * Searches for conflicts among the policies and stores them in the 
+	 * <code>conflicts</code> list.
+	 */
+	private void searchConflicts() {
+		PolicyLoader loader = new PolicyLoader(basePath, policiesBaseName);
+		loader.loadPolicies();
+		List<AbstractPolicy> policies = loader.getPolicies(); // The policies to be analyzed
+		
+		//TODO the following line of code is JUST FOR TESTING, I'LL HAVE TO REMOVE IT IN THE END!
+		PriorityRandomizer.randomizePoliciesPriorities(policies);
+		
+		//for(int i = 0; i < policies.size(); i++)
+			//System.out.println(policies.get(i).getId());
+		
+		for(int i = 0; i < policies.size(); i++)
+			for(int j = i; j < policies.size(); j++)
+				conflicts.addAll(policies.get(i).getConflictingRulePairs(policies.get(j)));
+	}
+	
+}

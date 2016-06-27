@@ -1,0 +1,69 @@
+/**
+ * 
+ */
+package conflictanalyzer.statistics;
+
+import java.util.ArrayList;
+
+import org.wso2.balana.AbstractPolicy;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class PoliciesWithSameNumberOfConflicts {
+	
+	private int numberOfConflicts;
+	
+	private ArrayList<AbstractPolicy> policies;
+
+	/**
+	 * @param numberOfConflicts
+	 * @param policies
+	 */
+	public PoliciesWithSameNumberOfConflicts(int numberOfConflicts, ArrayList<AbstractPolicy> policies) {
+		this.numberOfConflicts = numberOfConflicts;
+		this.policies = policies;
+	}
+	
+	/**
+	 * Creates an empty policies group with the specified number of conflicts that has to be 
+	 * common to them.
+	 * @param numberOfConflicts the specified number of conflicts
+	 */
+	public PoliciesWithSameNumberOfConflicts(int numberOfConflicts) {
+		this.numberOfConflicts = numberOfConflicts;
+		policies = new ArrayList<AbstractPolicy>();
+	}
+
+	/**
+	 * @return the numberOfConflicts
+	 */
+	public int getNumberOfConflicts() {
+		return numberOfConflicts;
+	}
+
+	/**
+	 * @return the policies
+	 */
+	public ArrayList<AbstractPolicy> getPolicies() {
+		return policies;
+	}
+	
+	/**
+	 * @param i the index
+	 * @return the i-th policy
+	 */
+	public AbstractPolicy getPolicy(int i) {
+		return policies.get(i);
+	}
+	
+	/**
+	 * Adds a policy to the collection.
+	 * @param policy the policy to add
+	 */
+	public void add(AbstractPolicy policy) {
+		policies.add(policy);
+	}
+
+}

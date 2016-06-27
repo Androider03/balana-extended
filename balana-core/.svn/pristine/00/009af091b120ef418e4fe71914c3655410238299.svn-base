@@ -1,0 +1,54 @@
+/**
+ * 
+ */
+package utilities;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class PoliciesExtractor {
+	
+	public static void main(String[] args) throws SAXException, IOException, 
+			ParserConfigurationException, XPathExpressionException, TransformerException {
+		String xml = "<A><B><id>0</id></B><B><id>1</id></B></A>";
+	    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+	    Document doc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+
+	    XPath xPath = XPathFactory.newInstance().newXPath();
+	    Node result = (Node) xPath.evaluate("A/B[id = '1']", doc, XPathConstants.NODE);
+
+	    System.out.println(nodeToString(result));
+	}
+
+	private static String nodeToString(Node node) throws TransformerException {
+		StringWriter buf = new StringWriter();
+		Transformer xform = TransformerFactory.newInstance().newTransformer();
+		xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		xform.transform(new DOMSource(node), new StreamResult(buf));
+		return(buf.toString());
+	}
+
+}

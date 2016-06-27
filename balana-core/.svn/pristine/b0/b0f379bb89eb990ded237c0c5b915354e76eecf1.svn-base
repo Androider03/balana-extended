@@ -1,0 +1,95 @@
+/**
+ * 
+ */
+package conflictanalyzer.logic;
+
+import java.net.URI;
+
+import org.wso2.balana.Rule;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class ConflictingRulesPair {
+
+	/**
+	 * The id of the policy that includes the first conflicting rule.
+	 */
+	private URI firstRulePolicyId;
+	
+	/**
+	 * First conflicting rule.
+	 */
+	private Rule firstRule;
+	
+	/**
+	 * The id of the policy that includes the second conflicting rule.
+	 */
+	private URI secondRulePolicyId;
+	
+	/**
+	 * Second conflicting rule.
+	 */
+	private Rule secondRule;
+
+	/**
+	 * @param firstRulePolicyId the id of the policy that contains the first conflicting rule
+	 * @param firstRule the first conflicting rule
+	 * @param secondRulePolicyId the id of the policy that contains the second conflicting rule
+	 * @param secondRule the second conflicting rule
+	 */
+	public ConflictingRulesPair(URI firstRulePolicyId, Rule firstRule, URI secondRulePolicyId, Rule secondRule) {
+		this.firstRulePolicyId = firstRulePolicyId;
+		this.firstRule = firstRule;
+		this.secondRulePolicyId = secondRulePolicyId;
+		this.secondRule = secondRule;
+	}
+
+	/**
+	 * @return the firstRulePolicyId
+	 */
+	public URI getFirstRulePolicyId() {
+		return firstRulePolicyId;
+	}
+
+	/**
+	 * @return the firstRule
+	 */
+	public Rule getFirstRule() {
+		return firstRule;
+	}
+
+	/**
+	 * @return the secondRulePolicyId
+	 */
+	public URI getSecondRulePolicyId() {
+		return secondRulePolicyId;
+	}
+
+	/**
+	 * @return the secondRule
+	 */
+	public Rule getSecondRule() {
+		return secondRule;
+	}
+	
+	// TODO this method will probably have to become pretty big, since it will have to show a
+	// TODO detailed report about the conflicts between the rules
+	@Override
+	public String toString() {
+		return "ConflictingRulesPair {"
+				+ "\n   Policy: " + firstRulePolicyId + " - Rule: " + firstRule.getId()
+				+ "\n   Policy: " + secondRulePolicyId + " - Rule: " + secondRule.getId()
+				+ "\n}";
+	}
+	
+	public String getCompactRepresentation() {
+		return "[[" + firstRulePolicyId + "," + firstRule.getId() +
+				"][" + secondRulePolicyId + "," + secondRule.getId() + "]]";
+	}
+	
+	// TODO maybe some methods for a more precise description of the conflict could be implemented
+	// TODO More precisely, we'll have to retrieve the "critical" AllOf elements, as well as
+	// TODO the critical condition elements
+}

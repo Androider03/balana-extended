@@ -1,0 +1,51 @@
+/**
+ * 
+ */
+package conflictanalyzer.logic;
+
+import java.util.ArrayList;
+
+import org.wso2.balana.AbstractPolicy;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class PoliciesWithSameNumberOfConflicts {
+	
+	private int numberOfConflicts;
+	
+	private ArrayList<AbstractPolicy> policies;
+
+	/**
+	 * @param numberOfConflicts
+	 * @param policies
+	 */
+	public PoliciesWithSameNumberOfConflicts(int numberOfConflicts, ArrayList<AbstractPolicy> policies) {
+		this.numberOfConflicts = numberOfConflicts;
+		this.policies = policies;
+	}
+
+	/**
+	 * @return the numberOfConflicts
+	 */
+	public int getNumberOfConflicts() {
+		return numberOfConflicts;
+	}
+
+	/**
+	 * @return the policies
+	 */
+	public ArrayList<AbstractPolicy> getPolicies() {
+		return policies;
+	}
+	
+	/**
+	 * @param i the index
+	 * @return the i-th policy
+	 */
+	public AbstractPolicy getPolicy(int i) {
+		return policies.get(i);
+	}
+
+}

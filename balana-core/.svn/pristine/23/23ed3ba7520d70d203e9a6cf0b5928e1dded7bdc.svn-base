@@ -1,0 +1,121 @@
+/**
+ * 
+ */
+package conflictanalyzer.ui;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GraphicsConfiguration;
+import java.awt.HeadlessException;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
+/**
+ * @author Guido Marilli
+ * GUI for conflict analysis.
+ */
+public class ConflictAnalyzerGUI extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6523267782524837903L;
+
+	/**
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI() throws HeadlessException {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(GraphicsConfiguration gc) {
+		super(gc);
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param title
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI(String title) throws HeadlessException {
+		super(title);
+		setLayout(new BorderLayout());
+		setSize(800, 600);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		String[] tabLabels = {"Conflicts", "Statistics"};
+		JTabbedPane tabs = new JTabbedPane();
+		for(int i = 0; i < tabLabels.length; i++)
+			tabs.addTab(tabLabels[i], null);
+		add(tabs);
+		
+		JPanel panel1 = new JPanel();
+		panel1.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JPanel panel2 = new JPanel();
+		/*JPanel analysisPanel = new JPanel();
+		analysisPanel.add(panel1);
+		analysisPanel.add(panel2);*/
+		
+		// PATH button
+		JButton selectPolicySourceButton = new JButton("Policies path");
+		selectPolicySourceButton.setMnemonic('P');
+		selectPolicySourceButton.setToolTipText("Select the folder in which the policies to "
+				+ "analyze are stored");
+		selectPolicySourceButton.setSize(150, 30);
+		
+		// PATH text field
+		JTextField pathTextField = new JTextField("C:\\...<path to policies directory>");
+		pathTextField.setColumns(30);
+		pathTextField.setEditable(false);
+		
+		// RUN button
+		JButton runButton = new JButton("Run");
+		runButton.setMnemonic('R');
+		runButton.setToolTipText("Run a new conflict analysis");
+		runButton.setSize(150, 30);
+		
+		// SAVE button
+		JButton saveButton = new JButton("Save");
+		saveButton.setMnemonic('S');
+		saveButton.setToolTipText("Save the results");
+		saveButton.setSize(150, 30);
+		
+		// TEXT AREA to show analysis results
+		JTextArea results = new JTextArea(32, 70);
+		
+		panel1.add(selectPolicySourceButton);
+		panel1.add(pathTextField);
+		panel1.add(runButton);
+		panel1.add(saveButton);
+		
+		panel2.add(tabs);
+		
+		// Add the panel to the frame
+		add(panel1, BorderLayout.NORTH);
+		add(panel2, BorderLayout.CENTER);
+	}
+
+	/**
+	 * @param title
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(String title, GraphicsConfiguration gc) {
+		super(title, gc);
+		// TODO Auto-generated constructor stub
+	}
+	
+	public static void main(String[] args) {
+		ConflictAnalyzerGUI gui = new ConflictAnalyzerGUI("Conflict Analyzer");
+		gui.setLocation(200, 80);
+		gui.setVisible(true);
+	}
+
+}

@@ -1,0 +1,63 @@
+/**
+ * 
+ */
+package conflictanalyzer.ui;
+
+import java.awt.GraphicsConfiguration;
+import java.awt.HeadlessException;
+
+import javax.swing.JFrame;
+
+/**
+ * @author Guido Marilli
+ * GUI for conflict analysis.
+ */
+public class ConflictAnalyzerGUI extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6523267782524837903L;
+
+	/**
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI() throws HeadlessException {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(GraphicsConfiguration gc) {
+		super(gc);
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param title
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI(String title) throws HeadlessException {
+		super(title);
+		setSize(400, 300);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+	}
+
+	/**
+	 * @param title
+	 * @param gc
+	 */
+	public ConflictAnalyzerGUI(String title, GraphicsConfiguration gc) {
+		super(title, gc);
+		// TODO Auto-generated constructor stub
+	}
+	
+	public static void main(String[] args) {
+		ConflictAnalyzerGUI gui = new ConflictAnalyzerGUI("Conflict Analyzer");
+		gui.setLocation(200, 200);
+		gui.setVisible(true);
+	}
+
+}

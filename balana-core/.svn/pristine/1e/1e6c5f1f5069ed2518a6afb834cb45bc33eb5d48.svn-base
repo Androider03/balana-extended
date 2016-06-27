@@ -1,0 +1,320 @@
+/**
+ * 
+ */
+package conflictanalyzer.ui;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.HeadlessException;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.general.DefaultPieDataset;
+import org.wso2.balana.Rule;
+
+import conflictanalyzer.logic.ConflictingRulesPair;
+import conflictanalyzer.logic.ConflictsCollection;
+import conflictanalyzer.logic.PolicyConflictAnalyzer;
+
+/**
+ * @author Guido Marilli
+ * GUI for conflict analysis.
+ */
+public class ConflictAnalyzerGUI extends JFrame {
+	private static final int width = 820;
+	private static final int height = 630;
+	
+	private static final Object conflictsTableLabels[] = { "1st policy", "Conflicting rule", 
+			"2nd policy", "Conflicting rule", "Winning rule", "Decision"};
+	private static final String[] tabLabels = {"Conflicts", "General statistics", 
+			"Policies statistics", "Rules statistics"};
+	
+	private PolicyConflictAnalyzer conflictAnalyzer;
+	private List<ConflictingRulesPair> conflicts;
+	
+	private JButton selectPolicySourceButton;
+	private JTextField pathTextField;
+	private JTextField policiesBaseNameTextField;
+	private JButton runButton;
+	//private JButton saveButton;
+	private TableModel conflictsTableModel;
+	private JTable conflictsTable;
+	private JTextArea statisticsTextArea;
+	private JTabbedPane tabs;
+	private File policiesDirectory;
+	
+	private ChartPanel chartPanel;
+	
+	private static final long serialVersionUID = 6523267782524837903L;
+
+	/**
+	 * @param title
+	 * @throws HeadlessException
+	 */
+	public ConflictAnalyzerGUI(String title, int width, int height) throws HeadlessException {
+		super(title);
+		conflictAnalyzer = null;
+		conflicts = null;
+		setLayout(new BorderLayout());
+		setSize(width, height);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JPanel panel1 = new JPanel();
+		panel1.setLayout(new FlowLayout(FlowLayout.CENTER));
+		
+		// PATH button
+		selectPolicySourceButton = new JButton("Policies path");
+		selectPolicySourceButton.setMnemonic('P');
+		selectPolicySourceButton.setToolTipText("Select the folder in which the policies"
+				+ " are stored");
+		selectPolicySourceButton.setSize(150, 30);
+		selectPolicySourceButton.addActionListener(new FileChooserListener());
+		
+		// PATH text field
+		pathTextField = new JTextField("");
+		pathTextField.setColumns(30);
+		pathTextField.setEditable(false);
+		
+		// POLICIES BASE NAME text field
+		policiesBaseNameTextField = new JTextField("<policies base name>", 15);
+		policiesBaseNameTextField.setToolTipText("The prefix of policy file names");
+		
+		// RUN button
+		runButton = new JButton("Run");
+		runButton.setMnemonic('R');
+		runButton.setToolTipText("Run a new conflict analysis");
+		runButton.setSize(150, 30);
+		runButton.addActionListener(new RunListener());
+		
+		// SAVE button
+		/*saveButton = new JButton("Save");
+		saveButton.setMnemonic('S');
+		saveButton.setToolTipText("Save the results");
+		saveButton.setSize(150, 30);
+		saveButton.addActionListener(new SaveListener());*/
+		
+		// TABLES to show analysis results
+		conflictsTableModel = new DefaultTableModel(null, conflictsTableLabels);
+		conflictsTable = new JTable(conflictsTableModel);
+		conflictsTable.setEnabled(false);
+		/*String[] toolTips = {"First policy involved in the conflict",
+				"First conflicting rule, contained in the first policy",
+				"Second policy involved in the conflict",
+				"Second conflicting rule, contained in the second policy",
+				"The final decision for conflict resolution"};*/
+		
+		// Text area for showing statistics
+		statisticsTextArea = new JTextArea();
+		
+		// SCROLL PANES for conflicts and statistics
+		JScrollPane conflictsScrollPane = new JScrollPane(conflictsTable);
+		conflictsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JScrollPane statisticsScrollPane = new JScrollPane(statisticsTextArea);
+		statisticsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		
+		tabs = new JTabbedPane();
+		tabs.addTab(tabLabels[0], conflictsScrollPane);
+		tabs.addTab(tabLabels[1], statisticsScrollPane);
+		
+		// CHART PANES for graphics
+		chartPanel = new ChartPanel(null);
+		
+		tabs.addTab(tabLabels[2], chartPanel);
+		tabs.addTab(tabLabels[3], null);
+		
+		panel1.add(selectPolicySourceButton);
+		panel1.add(pathTextField);
+		panel1.add(policiesBaseNameTextField);
+		panel1.add(runButton);
+		//panel1.add(saveButton);
+		
+		// Add the panel to the frame
+		add(panel1, BorderLayout.NORTH);
+		add(tabs, BorderLayout.CENTER);
+	}
+	
+	public static void main(String[] args) {
+		ConflictAnalyzerGUI gui = new ConflictAnalyzerGUI("Conflict Analyzer", width, height);
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int x = (screenSize.width - width)/2;
+		int y = (screenSize.height - height)/2;
+		gui.setLocation(x, y);		// Set the GUI at exact center of the screen
+		gui.setVisible(true);
+	}
+	
+	private class FileChooserListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				String userDir = System.getProperty("user.home");
+				JFileChooser fileChooser = new JFileChooser(userDir +"/Desktop");
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				//fileChooser.setFileFilter(new TxtFileFilter());
+				int n = fileChooser.showOpenDialog(ConflictAnalyzerGUI.this);
+				if (n == JFileChooser.APPROVE_OPTION) {
+					/*File f = fileChooser.getSelectedFile();
+					BufferedReader read = new BufferedReader(new FileReader(f));
+					String line = read.readLine();
+					while(line != null) {
+						pathTextField.setText(line);
+						line = read.readLine();
+					}
+					read.close();*/
+					//policiesDirectory = fileChooser.getCurrentDirectory();
+					String path = fileChooser.getSelectedFile().getPath();
+					policiesDirectory = new File(path);
+					pathTextField.setText(path);
+				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	
+	private class RunListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			DefaultTableModel conflictsTableModel = (DefaultTableModel) conflictsTable.getModel();
+			
+			// Delete previous content from conflicts table
+			conflictsTableModel.setRowCount(0);
+			
+			// Starting dialog
+			JOptionPane runOption = new JOptionPane("Analyzing the policies, it may take some "
+					+ "time...", JOptionPane.INFORMATION_MESSAGE, JOptionPane.PLAIN_MESSAGE);
+			JDialog analysisStarted = runOption.createDialog(ConflictAnalyzerGUI.this, "Info");
+			//analysisStarted.setSize(390, 120);
+			analysisStarted.pack();
+			analysisStarted.setVisible(true);
+			
+			// Analysis
+			conflictAnalyzer = new PolicyConflictAnalyzer(policiesDirectory.getAbsolutePath(), 
+							policiesBaseNameTextField.getText());
+			conflicts = conflictAnalyzer.getConflicts();
+			
+			Rule firstRule = null;
+			Rule secondRule = null;
+			String firstPolicyId = null;
+			String firstRuleId = null;
+			String secondPolicyId = null;
+			String secondRuleId = null;
+			String winningRule = null;
+			String decision = null;
+			/*CellColorRenderer cellRenderer = new CellColorRenderer();
+			conflictsTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);*/
+			
+			// Add results to the conflicts table
+			//for(ConflictingRulesPair conflict: conflicts) {
+			for(int i = 0; i < conflicts.size(); i++) {	
+				firstRule = conflicts.get(i).getFirstRule();
+				secondRule = conflicts.get(i).getSecondRule();
+				firstPolicyId = firstRule.getPolicy().getId().toString();
+				firstRuleId = firstRule.getId().toString();
+				secondPolicyId = secondRule.getPolicy().getId().toString();
+				secondRuleId = secondRule.getId().toString();
+				switch (conflicts.get(i).getWinningRuleNumber()) {
+				case 1:
+					winningRule = "1";
+					break;
+				case 2:
+					winningRule = "2";
+					break;
+				default:
+					winningRule = "None";
+					break;
+				}
+				decision = conflicts.get(i).getWinningDecisionStringFormat();
+				Object[] row = new Object[]{firstPolicyId, firstRuleId, secondPolicyId, 
+						secondRuleId, winningRule, decision};
+				conflictsTableModel.addRow(row);
+			}
+			/*TableCellRenderer cellRenderer = conflictsTable.getCellRenderer(0, 0);
+			cellRenderer.getTableCellRendererComponent(conflictsTable, null, false, false, 0, 0);*/
+			
+			/*TableCellRenderer cellRenderer = 
+					conflictsTable.getDefaultRenderer(Object.class);
+			conflictsTable.setDefaultRenderer(Object.class, cellRenderer);*/
+			
+			// Write statistics results
+			ConflictsCollection conflictsCollection = new ConflictsCollection(conflicts);
+			String statistics = "Conflicts detected: " + conflictsCollection.getConflicts().size() 
+					+ "\n" + conflictsCollection.getStatisticalInfoColumnized();
+			statisticsTextArea.setText(statistics);
+			
+			// Draw graphics
+			drawPoliciesStatisticsGraph();
+			
+			// Analysis completed dialog
+			JOptionPane analysisCompletedOption = new JOptionPane("Analysis completed", 
+					JOptionPane.INFORMATION_MESSAGE, JOptionPane.PLAIN_MESSAGE);
+			JDialog analysisCompleted = analysisCompletedOption.createDialog(
+					ConflictAnalyzerGUI.this, "Info");
+			//analysisCompleted.setSize(250, 120);
+			analysisCompleted.pack();
+			analysisCompleted.setVisible(true);
+		}
+	}
+	
+	/**
+	 * @author Guido Marilli
+	 * Listener class for SAVE button.
+	 */
+	private class SaveListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if(conflicts != null) {
+				// Print conflicts on a file
+				/*List<String> lines = new ArrayList<String>();
+				for(ConflictingRulesPair conflictingRulesPair : conflicts)
+					lines.add(conflictingRulesPair.getCompactRepresentationWithWinningRule());
+				Path file = Paths.get(
+						System.getProperty("user.home"),"Desktop","sample-policies","sample-xacml3",
+						"continue-a-xacml3-policies","Conflicts.txt");
+				try {
+					Files.write(file, lines, Charset.forName("UTF-8"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}*/
+			}
+		}
+	}
+	
+	private void drawPoliciesStatisticsGraph() {
+		// create a dataset...
+		DefaultPieDataset data = new DefaultPieDataset();
+		data.setValue("Category 1", 43.2);
+		data.setValue("Category 2", 27.9);
+		data.setValue("Category 3", 79.5);
+		// create a chart...
+		JFreeChart chart = ChartFactory.createPieChart(
+		"Sample Pie Chart",
+		data,
+		true, // legend?
+		true, // tooltips?
+		false // URLs?
+				);
+		chartPanel.setChart(chart);
+		//chartPanel = new ChartPanel(chart);
+	}
+
+}

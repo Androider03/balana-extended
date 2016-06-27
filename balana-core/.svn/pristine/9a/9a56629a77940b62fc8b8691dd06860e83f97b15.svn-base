@@ -1,0 +1,321 @@
+/**
+ * 
+ */
+package conflictanalyzer.logic;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.wso2.balana.AbstractPolicy;
+import org.wso2.balana.Rule;
+
+/**
+ * @author Guido Marilli
+ * Provides statistical analysis functionalities for collections of conflicts.
+ */
+public class ConflictsCollection {
+	
+	/**
+	 * A list of conflicting rules pairs.
+	 */
+	private List<ConflictingRulesPair> conflicts;
+	
+	/**
+	 * All the rules that are involved in conflicts.
+	 */
+	private List<Rule> rulesInvolved;
+	
+	/**
+	 * Rules are grouped according to their number number of conflicts. Two rules that
+	 * are involved in the same amount of conflicts are in the same group.
+	 */
+	private ArrayList<RulesWithSameNumberOfConflicts> groupsOfRulesWithSameNumberOfConflicts;
+
+	/**
+	 * @param conflicts
+	 */
+	public ConflictsCollection(List<ConflictingRulesPair> conflicts) {
+		this.conflicts = conflicts;
+		Set<Rule> allRulesInvolved = new HashSet<Rule>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			allRulesInvolved.add(conflictingRulesPair.getFirstRule());
+			allRulesInvolved.add(conflictingRulesPair.getSecondRule());
+		}
+		rulesInvolved = new ArrayList<Rule>(allRulesInvolved);
+		groupsOfRulesWithSameNumberOfConflicts = computeGroupsOfRulesWithSameNumberOfConflicts();
+	}
+
+	/**
+	 * @return the conflicts
+	 */
+	public List<ConflictingRulesPair> getConflicts() {
+		return conflicts;
+	}
+	
+	/**
+	 * @return the groupsOfRulesWithSameNumberOfConflicts
+	 */
+	public ArrayList<RulesWithSameNumberOfConflicts> getGroupsOfRulesWithSameNumberOfConflicts() {
+		return groupsOfRulesWithSameNumberOfConflicts;
+	}
+
+	/**
+	 * @return the policies involved in the conflicts
+	 */
+	public Set<AbstractPolicy> getPoliciesInvolved() {
+		Set<AbstractPolicy> result = new HashSet<AbstractPolicy>();
+		for (Rule rule : rulesInvolved)
+			result.add(rule.getPolicy());
+		return result;
+	}
+	
+	/**
+	 * @return the <code>Rule</code>s that are involved in the most number of conflicts
+	 */
+	public List<Rule> getMostConflictingRules() {
+		ArrayList<Integer> occurrencies = getRulesFrenquencies();
+		int max = Collections.max(occurrencies);
+		
+		List<Integer> indexes = new ArrayList<Integer>();
+		for(int i = 0; i < occurrencies.size(); i++)
+			if(occurrencies.get(i) == max)
+				indexes.add(i);
+		
+		List<Rule> result = new ArrayList<Rule>();
+		for(int i = 0; i < indexes.size(); i++)
+			result.add(rulesInvolved.get(indexes.get(i)));
+		
+		return result;
+	}
+	
+	/**
+	 * @return the policies that are involved in the most number of conflicts
+	 */
+	public List<AbstractPolicy> getMostConflictingPolicies() {
+		ArrayList<Integer> occurrencies = getPoliciesFrenquencies();
+		int max = Collections.max(occurrencies);
+		
+		Set<AbstractPolicy> policies = new HashSet<AbstractPolicy>();
+		for(Rule rule : rulesInvolved)
+			policies.add(rule.getPolicy());
+		List<AbstractPolicy> policiesList = new ArrayList<AbstractPolicy>(policies);
+		
+		List<Integer> indexes = new ArrayList<Integer>();
+		for(int i = 0; i < occurrencies.size(); i++)
+			if(occurrencies.get(i) == max)
+				indexes.add(i);
+		
+		List<AbstractPolicy> result = new ArrayList<AbstractPolicy>();
+		for(int i = 0; i < indexes.size(); i++)
+			result.add(policiesList.get(indexes.get(i)));
+		
+		return result;
+	}
+	
+	/**
+	 * @return the average number of conflicts per policy
+	 */
+	public float getAverageConflictsPerPolicy() {
+		return average(getPoliciesFrenquencies());
+	}
+	
+	/**
+	 * @return the average number of conflicts per rule
+	 */
+	public float getAverageConflictsPerRule() {
+		return average(getRulesFrenquencies());
+	}
+	
+	/**
+	 * @return basic statistical info in a printable format. The result includes
+	 * the most conflicting policies and rules as well as the average number of conflicts
+	 * for policies and rules.
+	 */
+	public String getStatisticalInfo() {
+		List<AbstractPolicy> mostConflictingPolicies = getMostConflictingPolicies();
+		List<Rule> mostConflictingRules = getMostConflictingRules();
+		float avgConflictsPerPolicy = getAverageConflictsPerPolicy();
+		float avgConflictsPerRule = getAverageConflictsPerRule();
+		
+		String result = "Most conflicting policies (max conflicts: " + getMaximumFrequenceForPolicies() + "): ";
+		for(int i = 0; i < mostConflictingPolicies.size() - 1; i++)
+			result += mostConflictingPolicies.get(i).getId() + ",";
+		result += mostConflictingPolicies.get(mostConflictingPolicies.size()-1).getId() 
+				+ "\nMost conflicting rules (max conflicts: " + getMaximumFrequenceForRules() + "): ";
+		for(int i = 0; i < mostConflictingRules.size() - 1; i++)
+			result += "[" + mostConflictingRules.get(i).getPolicy().getId() + "," 
+					+ mostConflictingRules.get(i).getId() + "],";
+		result += "[" + mostConflictingRules.get(mostConflictingRules.size()-1).getPolicy()
+				.getId() + "," 
+				+ mostConflictingRules.get(mostConflictingRules.size()-1).getId() + "]"
+				+ "\nAverage conflicts per policy: " + avgConflictsPerPolicy
+				+ "\nAverage conflicts per rule: " + avgConflictsPerRule;
+		
+		return result;
+	}
+	
+	/**
+	 * @return basic statistical info in a printable format, listing the results in column. 
+	 * The result includes the most conflicting policies and rules as well as the average number 
+	 * of conflicts for policies and rules.
+	 */
+	public String getStatisticalInfoColumnized() {
+		List<AbstractPolicy> mostConflictingPolicies = getMostConflictingPolicies();
+		List<Rule> mostConflictingRules = getMostConflictingRules();
+		float avgConflictsPerPolicy = getAverageConflictsPerPolicy();
+		float avgConflictsPerRule = getAverageConflictsPerRule();
+		
+		String result = "Average conflicts per policy: " + avgConflictsPerPolicy
+				+ "\nAverage conflicts per rule: " + avgConflictsPerRule
+				+ "\n\nMost conflicting policies (max conflicts: " + getMaximumFrequenceForPolicies() 
+				+ "):\n";
+		for(int i = 0; i < mostConflictingPolicies.size() - 1; i++)
+			result += "   " + mostConflictingPolicies.get(i).getId() + "\n";
+		result += "   " + mostConflictingPolicies.get(mostConflictingPolicies.size()-1).getId() 
+				+ "\n\nMost conflicting rules (max conflicts: " + getMaximumFrequenceForRules() + "):\n";
+		for(int i = 0; i < mostConflictingRules.size() - 1; i++)
+			result += "   [" + mostConflictingRules.get(i).getPolicy().getId() + "," 
+					+ mostConflictingRules.get(i).getId() + "]\n";
+		result += "   [" + mostConflictingRules.get(mostConflictingRules.size()-1).getPolicy()
+				.getId() + "," 
+				+ mostConflictingRules.get(mostConflictingRules.size()-1).getId() + "]";
+		
+		return result;
+	}
+	
+	/**
+	 * @return the frequence of the policies that are most involved in conflicts
+	 */
+	public int getMaximumFrequenceForPolicies() {
+		return Collections.max(getPoliciesFrenquencies());
+	}
+	
+	/**
+	 * @return the frequence of the rules that are most involved in conflicts
+	 */
+	public int getMaximumFrequenceForRules() {
+		return Collections.max(getRulesFrenquencies());
+	}
+	
+	/**
+	 * @return rules grouped by number of conflicts
+	 */
+	private ArrayList<RulesWithSameNumberOfConflicts> computeGroupsOfRulesWithSameNumberOfConflicts() {
+		ArrayList<Integer> frequencies = getRulesFrenquencies();
+		ArrayList<Integer> uniqueFrequencies = new ArrayList<>(new HashSet<>(frequencies));
+		ArrayList<RulesWithSameNumberOfConflicts> rulesGroups = 
+				new ArrayList<RulesWithSameNumberOfConflicts>();
+		ArrayList<Rule> rules = null;
+		
+		for(int i = 0; i < uniqueFrequencies.size(); i++) {
+			rules = new ArrayList<Rule>();
+			for(int j = 0; j < frequencies.size(); j++) {
+				if(uniqueFrequencies.get(i) == frequencies.get(j))
+					rules.add(rulesInvolved.get(j));
+			}
+			rulesGroups.add(new RulesWithSameNumberOfConflicts(uniqueFrequencies.get(i), rules));
+		}
+		return rulesGroups;
+	}
+	
+	/**
+	 * @return all the conflicting policies paired with the number of conflicts in which each 
+	 * one is involved
+	 */
+	private ArrayList<PolicyConflictsCounter> getPoliciesConflictsCounters() {
+		ArrayList<AbstractPolicy> policies = new ArrayList<AbstractPolicy>(getPoliciesInvolved());
+		ArrayList<AbstractPolicy> policiesInvolved = new ArrayList<AbstractPolicy>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			AbstractPolicy firstPolicy = conflictingRulesPair.getFirstRule().getPolicy();
+			AbstractPolicy secondPolicy = conflictingRulesPair.getSecondRule().getPolicy();
+			if(firstPolicy.equals(secondPolicy))
+				policiesInvolved.add(firstPolicy); // A conflict that happens inside the same policy must count as one!
+			else {
+				policiesInvolved.add(firstPolicy);
+				policiesInvolved.add(secondPolicy);
+			}
+		}
+		ArrayList<PolicyConflictsCounter> counters = new ArrayList<PolicyConflictsCounter>();
+		for(int i = 0; i < policies.size(); i++) {
+			counters.add(new PolicyConflictsCounter(policies.get(i), 
+					Collections.frequency(policiesInvolved, policies.get(i))));
+		}
+		return counters;
+	}
+	
+	/**
+	 * @return policies grouped by number of conflicts
+	 */
+	/*private ArrayList<PoliciesWithTheSameNumberOfConflicts> computeGroupsOfPoliciesWithSameNumberOfConflicts() {
+		ArrayList<AbstractPolicy> policiesInvolved = getPoliciesInvolved();
+		ArrayList<Integer> frequencies = getPoliciesFrenquencies();
+		ArrayList<Integer> uniqueFrequencies = new ArrayList<>(new HashSet<>(frequencies));
+		ArrayList<PoliciesWithTheSameNumberOfConflicts> policiesGroups = 
+				new ArrayList<PoliciesWithTheSameNumberOfConflicts>();
+		ArrayList<AbstractPolicy> policies = null;
+		
+		for(int i = 0; i < uniqueFrequencies.size(); i++) {
+			policies = new ArrayList<AbstractPolicy>();
+			for(int j = 0; j < frequencies.size(); j++) {
+				if(uniqueFrequencies.get(i) == frequencies.get(j))
+					policies.add(policiesInvolved.get(j));
+			}
+			policiesGroups.add(new PoliciesWithTheSameNumberOfConflicts(uniqueFrequencies.get(i), policies));
+		}
+		return policiesGroups;
+	}*/
+	
+	/**
+	 * @return the number of conflicts in which each policy is involved
+	 */
+	private ArrayList<Integer> getPoliciesFrenquencies() {
+		List<AbstractPolicy> allPoliciesOccurrencies = new ArrayList<AbstractPolicy>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			allPoliciesOccurrencies.add(conflictingRulesPair.getFirstRule().getPolicy());
+			allPoliciesOccurrencies.add(conflictingRulesPair.getSecondRule().getPolicy());
+		}
+		
+		Set<AbstractPolicy> policies = new HashSet<AbstractPolicy>();
+		for(Rule rule : rulesInvolved)
+			policies.add(rule.getPolicy());
+		List<AbstractPolicy> policiesList = new ArrayList<AbstractPolicy>(policies);
+		
+		ArrayList<Integer> occurrencies = new ArrayList<Integer>();
+		for(int i = 0; i < policiesList.size(); i++)
+			occurrencies.add(Collections.frequency(allPoliciesOccurrencies, policiesList.get(i)));
+		return occurrencies;
+	}
+	
+	/**
+	 * @return the number of rules in which each policy is involved
+	 */
+	private ArrayList<Integer> getRulesFrenquencies() {
+		List<Rule> allRulesOccurrencies = new ArrayList<Rule>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			allRulesOccurrencies.add(conflictingRulesPair.getFirstRule());
+			allRulesOccurrencies.add(conflictingRulesPair.getSecondRule());
+		}
+
+		List<Rule> rules = new ArrayList<Rule>(rulesInvolved);
+
+		ArrayList<Integer> occurrencies = new ArrayList<Integer>();
+		for(int i = 0; i < rules.size(); i++)
+			occurrencies.add(Collections.frequency(allRulesOccurrencies, rules.get(i)));
+		return occurrencies;
+	}
+	
+	/**
+	 * @param values
+	 * @return the average of the specified values
+	 */
+	private float average(List<Integer> values) {
+		int sum = 0;
+		for(int i = 0; i < values.size(); i++)
+			sum += values.get(i);
+		return Math.round(((float) sum/values.size()) * 100)/100f;
+	}
+	
+}

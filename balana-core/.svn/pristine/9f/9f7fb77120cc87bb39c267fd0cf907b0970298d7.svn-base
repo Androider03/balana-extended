@@ -1,0 +1,121 @@
+/**
+ * 
+ */
+package conflictanalyzer.logic;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.wso2.balana.AbstractPolicy;
+import org.wso2.balana.Rule;
+
+/**
+ * @author Guido Marilli
+ *
+ */
+public class ConflictsCollection {
+	
+	/**
+	 * A list of conflicting rules pairs.
+	 */
+	private List<ConflictingRulesPair> conflicts;
+	
+	/**
+	 * All the rules that are involved in conflicts.
+	 */
+	private Set<Rule> rulesInvolved;
+
+	/**
+	 * @param conflicts
+	 */
+	public ConflictsCollection(List<ConflictingRulesPair> conflicts) {
+		this.conflicts = conflicts;
+		rulesInvolved = new HashSet<Rule>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			rulesInvolved.add(conflictingRulesPair.getFirstRule());
+			rulesInvolved.add(conflictingRulesPair.getSecondRule());
+		}
+	}
+
+	/**
+	 * @return the conflicts
+	 */
+	public List<ConflictingRulesPair> getConflicts() {
+		return conflicts;
+	}
+	
+	/**
+	 * @return the policies involved in the conflicts
+	 */
+	public Set<AbstractPolicy> getPoliciesInvolved() {
+		Set<AbstractPolicy> result = new HashSet<AbstractPolicy>();
+		for (Rule rule : rulesInvolved)
+			result.add(rule.getPolicy());
+		return result;
+	}
+	
+	/**
+	 * @return the <code>Rule</code>s that are involved in the most number of conflicts
+	 */
+	public List<Rule> getMostConflictingRules() {
+		List<Rule> allRulesOccurrencies = new ArrayList<Rule>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			allRulesOccurrencies.add(conflictingRulesPair.getFirstRule());
+			allRulesOccurrencies.add(conflictingRulesPair.getSecondRule());
+		}
+		
+		List<Rule> rules = new ArrayList<Rule>(rulesInvolved);
+		
+		ArrayList<Integer> occurrencies = new ArrayList<Integer>();
+		for(int i = 0; i < rules.size(); i++)
+			occurrencies.add(Collections.frequency(allRulesOccurrencies, rules.get(i)));
+		int max = Collections.max(occurrencies);
+		
+		List<Integer> indexes = new ArrayList<Integer>();
+		for(int i = 0; i < occurrencies.size(); i++)
+			if(occurrencies.get(i) == max)
+				indexes.add(i);
+		
+		List<Rule> result = new ArrayList<Rule>();
+		for(int i = 0; i < indexes.size(); i++)
+			result.add(rules.get(indexes.get(i)));
+		
+		return result;
+	}
+	
+	/**
+	 * @return the policies that are involved in the most number of conflicts
+	 */
+	public List<AbstractPolicy> getMostConflictingPolicies() {
+		List<AbstractPolicy> allPoliciesOccurrencies = new ArrayList<AbstractPolicy>();
+		for (ConflictingRulesPair conflictingRulesPair : conflicts) {
+			allPoliciesOccurrencies.add(conflictingRulesPair.getFirstRule().getPolicy());
+			allPoliciesOccurrencies.add(conflictingRulesPair.getSecondRule().getPolicy());
+		}
+		
+		Set<AbstractPolicy> policies = new HashSet<AbstractPolicy>();
+		for(Rule rule : rulesInvolved)
+			policies.add(rule.getPolicy());
+		List<AbstractPolicy> policiesList = new ArrayList<AbstractPolicy>(policies);
+		
+		ArrayList<Integer> occurrencies = new ArrayList<Integer>();
+		for(int i = 0; i < policiesList.size(); i++)
+			occurrencies.add(Collections.frequency(allPoliciesOccurrencies, policiesList.get(i)));
+		int max = Collections.max(occurrencies);
+		
+		List<Integer> indexes = new ArrayList<Integer>();
+		for(int i = 0; i < occurrencies.size(); i++)
+			if(occurrencies.get(i) == max)
+				indexes.add(i);
+		
+		List<AbstractPolicy> result = new ArrayList<AbstractPolicy>();
+		for(int i = 0; i < indexes.size(); i++)
+			result.add(policiesList.get(indexes.get(i)));
+		
+		return result;
+	}
+	
+}
